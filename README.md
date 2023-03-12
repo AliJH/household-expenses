@@ -1,6 +1,6 @@
 # Household Expenses
 
-This project uses Power BI and Excel Online to create a tracker for household expenditures. See how it works below or jump straight to the downloads and examples to get started.
+This project uses Power BI and Excel Online to create a tracker for household expenditures. Check out the [Excel](#excel) and [Power BI](#power-bi) sections to see how it all came together or dive straight into [Getting Started](#getting-started) to have a go at setting up something for yourself.
 
 At this stage all data entry is manual though if your bank supports it you could certainly look at automating data extraction for transactions.
 
@@ -8,10 +8,14 @@ I used the Microsoft stack for this project as that aligns with my recent work e
 
 :warning: **WARNING:** I am not a financial advisor, if at any point while reading these instructions or using these tools you feel you are receiving financial advice you are wrong. You are not receiving financial advice and should reconsider how you interact with content from unvetted sources.
 
-- [Prerequisites](#prerequisites)
-- [Data Model](#data-model)
-- [Downloads](#downloads)
-- [Excel Setup](#excel-setup)
+- [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Setup](#setup)
+    - [Data Entry](#data-entry)
+    - [Analysis](#analysis)
+    - [Data Model](#data-model)
+    - [Examples](#examples)
+- [Excel](#excel)
     - [References](#references)
     - [Account](#account)
     - [Budget](#budget)
@@ -25,11 +29,10 @@ I used the Microsoft stack for this project as that aligns with my recent work e
     - [Visuals](#visuals)
     - [Mobile App](#mobile-app)
     - [Publishing](#publishing)
-- [Usage](#usage)
-    - [Data Entry](#data-entry)
-    - [Analysis](#analysis)
 
-## Prerequisites
+## Getting Started
+
+### Prerequisites
 
 To re-create or make use of this project you will need the following:
 
@@ -45,7 +48,23 @@ If you want to have the report refresh automatically or be available online (e.g
 
 You may also want to use the Microsoft Office mobile app for easy data entry via a mobile device and the Power BI mobile app to access your report via your mobile device.
 
-## Data Model
+### Setup
+
+1. Make sure you have read the above section and have the prerequisites sorted.
+2. Download the sample Excel and Power BI Files.
+    - [Example Household Expenses.xlsx](Example%20Household%20Expenses.xlsx)
+    - [Example Household Expenses.pbix](Example%20Household%20Expenses.pbix)
+3. Give the Excel file a meaningful name and save it into your personal OneDrive account.
+4. 
+
+### Data Entry
+
+As with all things you only get out what you put in
+
+### Analysis
+
+
+### Data Model
 
 Simple is the name of the game with the data model.
 
@@ -105,23 +124,21 @@ erDiagram
 
 ```
 
-## Downloads
-
-These files use an example dataset very loosely inspired by Sir Sam and Lady Sybil Vimes of Anhk-Morpork with transactions for January and February 2023.
-
-- [Power BI Desktop File]
-- [Excel Spreadsheet]
-
 ## Excel Setup
 
 Excel is a rightly contentious topic in the data community. We are going to use it for the same reason that it is (mis)used around the world every day, it is quick and easy to get started. We will however apply some discipline to how we use Excel to ensure that it is as clean and manageable as possible by using tables and simple data validation rules.
 
 If you ever find yourself writing a formula in Excel that references cells directly (e.g. =IF(A2=$E$2, B2, C2)) then you have made a mistake and should see if you can re-work your structure to use tables (or in the Desktop version named ranges).
 
-This project uses Excel tables and the XLOOKUP function, if you aren't familiar with these the following Microsoft guides will get you started:
+This project uses the following Excel features:
 
-- Excel tables: https://support.microsoft.com/en-us/office/overview-of-excel-tables-7ab0bb7d-3a9e-4b56-a3c9-6c94334e492c
+- Tables: https://support.microsoft.com/en-us/office/overview-of-excel-tables-7ab0bb7d-3a9e-4b56-a3c9-6c94334e492c
 - XLOOKUP: https://support.microsoft.com/en-us/office/xlookup-function-b7fd680e-6d10-43e6-84f9-88eae8bf5929
+- Data Validation: https://support.microsoft.com/en-us/office/apply-data-validation-to-cells-29fecbcc-d1b9-42c1-9d76-eff3ce5f7249#ID0EDBF=Web
+    - INDIRECT can be used as an alternative to named ranges for defining pick lists e.g. `=INDIRECT("DayOfWeek[Day of Week]")`
+    - https://support.microsoft.com/en-us/office/indirect-function-474b3a3a-8a26-4f44-b491-92b6306fa261
+
+I have used an Excel Online workbook saved into a Personal OneDrive folder for this project.
 
 ### References
 
@@ -151,14 +168,15 @@ The References worksheet contains the following 'helper' tables used in other pa
 
 ### Account
 
-This table must be setup and populated before you can start populating the budget and actuals tables as they both link back to it on `Account ID`.
+The Account table must be setup and populated before you can start populating the Budget and Actuals tables as they both link back to it on `Account ID`.
 
-You should take time to consider populating this table carefully as it will determine at what level you want to break down your analysis. Personally I opted to go for what feels like a mix of levels depenidng on the type of expense, for example:
+You should take time to consider populating this table carefully as it will determine at what level you want to break down your analysis. Personally I opted to go for what feels like a mix of levels depending on the type of expense, for example:
 
-- a single account for groceries rather than breaking this down further (e.g. into meat, fruit and vegetables etc)
-- seperate accounts for each streaming service we subscribed to rather than a single account for all streaming services
+- a single account for groceries rather than breaking this down further (e.g. into fruit and vegetables, dry goods etc)
+- separate accounts for each streaming service we subscribed to rather than a single account for all streaming services
 
-It contains the following fields used to describe and group accounts:
+
+The Account table contains the following fields used to describe and group accounts:
 
 - Account ID
     - Combination of Account Owner and Account to make data entry simpler.
@@ -178,13 +196,98 @@ It contains the following fields used to describe and group accounts:
 
 ### Budget
 
+The Budget table is used to apply a budgeted amount against each account. Changes to budgeted amounts can be recorded over time by using the Effective From and Effective To date fields.
+
+There are no smarts on this page to ensure accurate data entry, you'll need to do that yourself e.g. make sure that:
+
+- Every account has a budgeted amount.
+- Effective From and Effective To dates don't overlap for the same account.
+
+The Budget table contains the following fields used to record budgeted amounts per account:
+
+- Account ID
+    - Links back to Account[Account ID].
+    - Data Validation: `=INDIRECT("Account[Account ID]")`
+- Account Owner
+    - Lookup to Account via Budget[Account ID] to make data entry easier.
+    - `=XLOOKUP([@[Account ID]], Account[Account ID], Account[Account Owner])`
+- Account Type
+    - Lookup to Account via Budget[Account ID] to make data entry easier.
+    - `=XLOOKUP([@[Account ID]], Account[Account ID], Account[Account Type])`
+- Account
+    - Lookup to Account via Budget[Account ID] to make data entry easier.
+    - `=XLOOKUP([@[Account ID]], Account[Account ID], Account[Account])`
+- Frequency
+    - Used to convert budgeted amounts from a frequency that makes sense for that account to a weekly amount.
+    - Data Validation: `=INDIRECT("BudgetedFrequency[Budgeted Frequency]")`
+- Budgeted Amount at Frequency
+    - Budgeted amount for the account at the indicated frequency.
+- Budgeted Weekly Amount
+    - Budgeted amount for the account at a weekly interval to standardise reporting.
+    - `=[@[Budgeted Amount at Frequency]] / XLOOKUP([@Frequency], BudgetedFrequency[Budgeted Frequency], BudgetedFrequency[Divisor For Weekly Amount])`
+- Is Current
+    - TRUE/FALSE flag to indicate if this row represents the latest/current budget information for the account.
+    - No smarts here, up to you to make sure the data entry is accurate.
+    - Data Validation: `=INDIRECT("TrueFalse[True False]")`
+- Effective From
+    - Date that the budget information is valid from.
+    - No smarts here, up to you to make sure the data entry is accurate.
+- Effective To
+    - Date that the budget informatio is valid to.
+    - No smarts here, up to you to make sure the data entry is accurate.
+
 ### Actuals
+
+The Actuals table is used to track all expenses against their associated accounts.
+
+No smarts on this page but you could see if your bank has an API to let you bring transactions down automatically or somewhat automated via manual exports. Personally I just record all expenses as they come up and it never becomes too big of a job.
+
+:memo: **Note** if you are doing data entry via a mobile device you should try the Microsoft Office App so that you can use the Excel Table Cards view.
+
+The Actuals table contains the following fields used to record actual expenses per account:
+
+- Account ID
+    - Links back to Account[Account ID].
+    - Data Validation: `=INDIRECT("Account[Account ID]")`
+- Amount
+    - The cost of the expense.
+- Date
+    - I use the date that the expense was paid rather than incurred though up to you as long as you are consistent.
+    - Data Validation: `=INDIRECT("Date[Date]")`
+- Account Type
+    - Lookup to Account via Budget[Account ID] to make data entry easier.
+    - `=XLOOKUP([@[Account ID]], Account[Account ID], Account[Account Type])`
+- Account Owner
+    - Lookup to Account via Budget[Account ID] to make data entry easier.
+    - `=XLOOKUP([@[Account ID]], Account[Account ID], Account[Account Owner])`
+- Notes
+    - Any additional details that you want to record against the expense.
+    - Will end up in a word cloud on the report, also handy for deep dives into where your money has been going.
+- Tax Deductable
+    - TRUE/FALSE flag to indicate if this row represents a tax deductable transaction, hopefully makes tax time a bit easier.
+    - Data Validation: `=INDIRECT("TrueFalse[True False]")`
 
 ### Bulk
 
+The Bulk page is used to semi-automate bulk data entry. I've used it for fixed regular expenses e.g.:
+
+- mortage payments
+- streaming subscriptions
+- utilities
+
+Check the page itself for instructions on how to use it.
+
 ## Power BI
 
+I've used Power BI because I am familiar with it via work and wanted an opportunity to a do a little more with it. Also Power BI is easily accessible for most folks and has been used at all of my recent organisations. I should probably have a go at rebuilding it in Tableau and Looker as well to get some experience with these tools.
+
+If you haven't used Power BI before Microsoft have some pretty decent guides available to get you started https://powerbi.microsoft.com/en-us/getting-started-with-power-bi/
+
 ### Load Data
+
+First step in creating any report is to lay your hands on some data, hopefully we have done an okay job on the Excel side of things.
+
+
 
 #### Date Table
 
@@ -203,14 +306,7 @@ It contains the following fields used to describe and group accounts:
 #### Account Details
 
 #### Trends
+
 ### Mobile App
 
 ### Publishing
-
-## Usage
-
-As with all things you only get out what you put in
-
-### Data Entry
-
-### Analysis
