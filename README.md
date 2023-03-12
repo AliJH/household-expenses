@@ -118,6 +118,11 @@ Excel is a rightly contentious topic in the data community. We are going to use 
 
 If you ever find yourself writing a formula in Excel that references cells directly (e.g. =IF(A2=$E$2, B2, C2)) then you have made a mistake and should see if you can re-work your structure to use tables (or in the Desktop version named ranges).
 
+This project uses Excel tables and the XLOOKUP function, if you aren't familiar with these the following Microsoft guides will get you started:
+
+- Excel tables: https://support.microsoft.com/en-us/office/overview-of-excel-tables-7ab0bb7d-3a9e-4b56-a3c9-6c94334e492c
+- XLOOKUP: https://support.microsoft.com/en-us/office/xlookup-function-b7fd680e-6d10-43e6-84f9-88eae8bf5929
+
 ### References
 
 The References worksheet contains the following 'helper' tables used in other parts of the workbook.
@@ -145,6 +150,31 @@ The References worksheet contains the following 'helper' tables used in other pa
 - Used as a data validation pick list in the Bulk spreadsheet to simplify data entry.
 
 ### Account
+
+This table must be setup and populated before you can start populating the budget and actuals tables as they both link back to it on `Account ID`.
+
+You should take time to consider populating this table carefully as it will determine at what level you want to break down your analysis. Personally I opted to go for what feels like a mix of levels depenidng on the type of expense, for example:
+
+- a single account for groceries rather than breaking this down further (e.g. into meat, fruit and vegetables etc)
+- seperate accounts for each streaming service we subscribed to rather than a single account for all streaming services
+
+It contains the following fields used to describe and group accounts:
+
+- Account ID
+    - Combination of Account Owner and Account to make data entry simpler.
+    - `=LEFT([@[Account Owner]], 3) & "-" & [@Account]`.
+- Account Owner
+    - Used to tie an account back to a particular person, something I used as my wife and I tend to keep our personal finances separate.
+    - If you don't want to Account Owner and aren't comfortable with Power BI yet you may find it simplest to set use the same value for all entries.
+- Account Type
+    - Categorical grouping for accounts, e.g. Entertainment or Health.
+- Is Day to Day Living
+    - Either *TRUE* or *FALSE*, used as a quick filter in visualiations where you don't want irregular or fixed costs influencing the analysis.
+- Is Food Related
+    - Either *TRUE* or *FALSE*, similiar to the above used as a quick filter because this is something in particular that I wanted to track.
+- Breakdown
+    - As Is Food Related was generally a subset of Is Day to Day Living this represented a convenient way of creating a high level group for accounts based on these flags.
+    - `=IF([@[Is Food Related]], "Food", IF([@[Is Day to Day Living]], "Day to Day", "Other"))`
 
 ### Budget
 
