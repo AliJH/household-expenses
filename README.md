@@ -10,7 +10,7 @@ I used the Microsoft stack for this project as that aligns with my recent work e
 
 - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
-    - [Setup](#setup)
+    - [Initial Setup](#initial-setup)
     - [Data Entry](#data-entry)
     - [Analysis](#analysis)
     - [Data Model](#data-model)
@@ -48,14 +48,38 @@ If you want to have the report refresh automatically or be available online (e.g
 
 You may also want to use the Microsoft Office mobile app for easy data entry via a mobile device and the Power BI mobile app to access your report via your mobile device.
 
-### Setup
+### Initial Setup
+
+The first thing that we are going to do is configure copies of the Excel and Power BI files so that they can be used together.
 
 1. Make sure you have read the above section and have the prerequisites sorted.
 2. Download the sample Excel and Power BI Files.
     - [Example Household Expenses.xlsx](Example%20Household%20Expenses.xlsx)
     - [Example Household Expenses.pbix](Example%20Household%20Expenses.pbix)
 3. Give the Excel file a meaningful name and save it into your personal OneDrive account.
-4. 
+4. Generate an embed link for the Excel file, we'll need this to load the data into Power BI.
+    - browse to the OneDrive folder that the Excel file is saved within
+    - select the file but don't open it
+    - click on *Embed* from the menu along the top
+    - copy the embed code into a text editor (e.g. Notepad++)
+    - from the URL inside the embed code retrieve the: resid; cid and; authkey, these values com after embed? and are seperated by '&'s
+    - e.g. if you had the below embed code you would end up with:
+        - cid = 4F9CE0027445F3F9
+        - resid = 4F9CE0027445F3F9%21704043
+        - authkey = ALtMpI-9vXWqOxc
+
+```html
+<iframe src="https://onedrive.live.com/embed?cid=4F9CE0027445F3F9&resid=4F9CE0027445F3F9%21704043&authkey=ALtMpI-9vXWqOxc&em=2" width="402" height="346" frameborder="0" scrolling="no"></iframe>
+```
+
+5. Open the Power BI file and select *Transform Data* .
+6. Within the Excel URL folder enter the values that you recorded in step 4 into their corresponding parameters.
+7. Try *Refresh Preview* > *Refresh All* to check the connection to the Excel workbook, if prompted to login select **Anonymous**.
+    - if things haven't worked out go back to step 4 and double check you have the correct values for the: resid; cid and; authkey
+8. Press *Close & Apply* to apply the changes that you have made.
+9. Save your Power BI file with a meaningful name.
+
+You should now have connectivity between your versions of the Excel and Power BI files. If you have signed up for the Power BI service you can now press *Publish* and follow the prompts to login to upload your report to the Power BI service.
 
 ### Data Entry
 
