@@ -12,6 +12,7 @@ I used the Microsoft stack for this project as that aligns with my recent work e
     - [Prerequisites](#prerequisites)
     - [Initial Setup](#initial-setup)
     - [Data Entry](#data-entry)
+    - [Data Refresh](#data-refresh)
     - [Analysis](#analysis)
     - [Data Model](#data-model)
     - [Examples](#examples)
@@ -83,9 +84,24 @@ You should now have connectivity between your versions of the Excel and Power BI
 
 ### Data Entry
 
-As with all things you only get out what you put in
+As with all things you only get out what you put in. Initial data entry requires populating the [Account](#account) and [Budget](#budget) tables, the [Excel Setup](#excel-setup) instructions for these tables provides some guidance on populating them.
+
+- [Account](#account)
+- [Budget](#budget)
+
+Once you have populated the [Account](#account) and [Budget](#budget) tables it is time to start populating the [Actuals](#actuals) tables. You can use the [Bulk](#bulk) worksheet to do initial data entry of regular expenses but after that it is time for manual data entry.
+
+I personally find it pretty quick and easy to use Excel Table Cards view on my mobile phone to record expenses as they occur:
+
+- https://support.microsoft.com/en-us/office/use-cards-view-to-work-with-table-data-on-your-phone-fda6099e-2de8-4a52-a926-90a7ee61a32b
+- ![Excel Table Card Example](images/excel_table_card_example_01_small.png)
+
+### Data Refresh
+
+You can use the *Refresh* button in Power BI desktop to manually refresh your report or if you have signed up for the Power BI service you can setup a scheduled refresh
 
 ### Analysis
+
 
 
 ### Data Model
@@ -218,6 +234,8 @@ The Account table contains the following fields used to describe and group accou
     - As Is Food Related was generally a subset of Is Day to Day Living this represented a convenient way of creating a high level group for accounts based on these flags.
     - `=IF([@[Is Food Related]], "Food", IF([@[Is Day to Day Living]], "Day to Day", "Other"))`
 
+![Example Account Table in Excel](images/excel_account_example_01.png)
+
 ### Budget
 
 The Budget table is used to apply a budgeted amount against each account. Changes to budgeted amounts can be recorded over time by using the Effective From and Effective To date fields.
@@ -260,6 +278,8 @@ The Budget table contains the following fields used to record budgeted amounts p
     - Date that the budget informatio is valid to.
     - No smarts here, up to you to make sure the data entry is accurate.
 
+![Example Budget Table in Excel](images/excel_budget_example_01.png)
+
 ### Actuals
 
 The Actuals table is used to track all expenses against their associated accounts.
@@ -291,6 +311,8 @@ The Actuals table contains the following fields used to record actual expenses p
     - TRUE/FALSE flag to indicate if this row represents a tax deductable transaction, hopefully makes tax time a bit easier.
     - Data Validation: `=INDIRECT("TrueFalse[True False]")`
 
+![Example Actuals Table in Excel](images/excel_actuals_example_01.png)
+
 ### Bulk
 
 The Bulk page is used to semi-automate bulk data entry. I've used it for fixed regular expenses e.g.:
@@ -301,11 +323,17 @@ The Bulk page is used to semi-automate bulk data entry. I've used it for fixed r
 
 Check the page itself for instructions on how to use it.
 
+![Example Bulk Worksheet in Excel](images/excel_bulk_example_01.png)
+
 ## Power BI
 
 I've used Power BI because I am familiar with it via work and wanted an opportunity to a do a little more with it. Also Power BI is easily accessible for most folks and has been used at all of my recent organisations. I should probably have a go at rebuilding it in Tableau and Looker as well to get some experience with these tools.
 
 If you haven't used Power BI before Microsoft have some pretty decent guides available to get you started https://powerbi.microsoft.com/en-us/getting-started-with-power-bi/
+
+I have used the xyz theme created by blah with some minor tweaks.
+
+If you want to give the report I quick face lift check out other themes shared via the Power BI Themes Gallery https://community.powerbi.com/t5/Themes-Gallery/bd-p/ThemesGallery
 
 ### Load Data
 
