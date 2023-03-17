@@ -1,6 +1,14 @@
 # Household Expenses
 
-This project uses Power BI and Excel Online to create a tracker for household expenditures. Check out the [Excel](#excel) and [Power BI](#power-bi) sections to see how it all came together or dive straight into [Getting Started](#getting-started) to have a go at setting up something for yourself.
+This project started because I wanted to better understand of how I was spending my money so that I could identify opportunities to be smarter with savings and start actively working towards some sort of early retirement plan. I felt like I already had a pretty good idea of how things were going but as we know gut feel is not often a good substitute for hard data. Initial plan was to just keep a list of costs for a few months and then dive into them in an exploratory and ad-hoc manner however I decided that this would be a good opportunity to get hands on with Power BI again as my current role is more focussed on data engineering than reporting and I was feeling a little rusty.
+
+This project uses Power BI and Excel Online to create a tracker for household expenditures.
+
+![Power BI Summary Teaser](images/powerbi_summary_teaser.png)
+
+The Power BI screenshots in this guide are from an example copy of the report which is using the *More Dark Mode* theme from *Numerro* with some minor tweaks https://community.powerbi.com/t5/Themes-Gallery/Showcasing-Themes-More-Dark-Mode/td-p/1987778
+
+Check out the [Excel](#excel) and [Power BI](#power-bi) sections to see how it all came together or dive straight into [Getting Started](#getting-started) to have a go at setting up something for yourself.
 
 At this stage all data entry is manual though if your bank supports it you could certainly look at automating data extraction for transactions.
 
@@ -24,6 +32,7 @@ I used the Microsoft stack for this project as that aligns with my recent work e
     - [Bulk](#bulk)
 - [Power BI](#power-bI)
     - [Load Data](#load-data)
+        - [Parameters](#parameters)
         - [Date Table](#date-table)
     - [Relationships](#relationships)
     - [Measures](#measures)
@@ -73,9 +82,13 @@ The first thing that we are going to do is configure copies of the Excel and Pow
 <iframe src="https://onedrive.live.com/embed?cid=4F9CE0027445F3F9&resid=4F9CE0027445F3F9%21704043&authkey=ALtMpI-9vXWqOxc&em=2" width="402" height="346" frameborder="0" scrolling="no"></iframe>
 ```
 
-5. Open the Power BI file and select *Transform Data* .
-6. Within the Excel URL folder enter the values that you recorded in step 4 into their corresponding parameters.
-7. Try *Refresh Preview* > *Refresh All* to check the connection to the Excel workbook, if prompted to login select **Anonymous**.
+5. Open the Power BI file and select *Transform Data > Edit Parameters*.
+6. Enter the values that you recorded in step 4 into their corresponding parameters.
+    - leave excel_url_base as it is
+    
+    ![Power BI Parameters](images/powerbi_parameters.png)
+
+7. Try the *Refresh* button to check the connection to the Excel workbook, if prompted to login select **Anonymous**.
     - if things haven't worked out go back to step 4 and double check you have the correct values for the: resid; cid and; authkey
 8. Press *Close & Apply* to apply the changes that you have made.
 9. Save your Power BI file with a meaningful name.
@@ -94,15 +107,38 @@ Once you have populated the [Account](#account) and [Budget](#budget) tables it 
 I personally find it pretty quick and easy to use Excel Table Cards view on my mobile phone to record expenses as they occur:
 
 - https://support.microsoft.com/en-us/office/use-cards-view-to-work-with-table-data-on-your-phone-fda6099e-2de8-4a52-a926-90a7ee61a32b
-- ![Excel Table Card Example](images/excel_table_card_example_01_small.png)
+
+    ![Excel Table Card Example](images/excel_table_card_example_01_small.png)
 
 ### Data Refresh
 
-You can use the *Refresh* button in Power BI desktop to manually refresh your report or if you have signed up for the Power BI service you can setup a scheduled refresh
+You can use the *Refresh* button in Power BI desktop to manually refresh your report or if you have signed up for the Power BI service you can publish your report and then setup a scheduled refresh:
+- publish - https://learn.microsoft.com/en-us/power-bi/create-reports/desktop-upload-desktop-files
+- schedule - https://learn.microsoft.com/en-us/power-bi/connect-data/refresh-scheduled-refresh
 
 ### Analysis
 
+While the visualisations I have created so far are hopefully a good start they have been tailored to where I want to take my personal analysis.
 
+Each page that I have created is geared towards a specific purpose:
+
+- Summary - generally filtered to `[Is Day to Day Living] = TRUE` to provide a quick overview of how the more variable expenses are tracking in recent weeks
+
+    ![Power BI Summary Teaser](images/powerbi_summary_teaser.png)
+
+- Highlights - used to identify any accounts that are trending significantly above what I expected/had vague plans for
+
+    ![Power BI Highlights Teaser](images/powerbi_highlights_teaser.png)
+
+- Account Details - drill into a specific account or group of accounts
+
+    ![Power BI Account Details Teaser](images/powerbi_account_details_teaser.png)
+
+- Trends - get a general high level overview of how actuals are tracking
+
+    ![Power BI Trends Teaser](images/powerbi_trends_teaser.png)
+
+If you are still getting started with Power BI I would encourage you to read through the [Power BI](#power-bi) section to see how the existing visualisations have been created and maybe spark some ideas for changing them or even creating new ones to suit your particular requirements.
 
 ### Data Model
 
@@ -161,8 +197,9 @@ erDiagram
 
     ACCOUNT ||--|{ ACTUALS : ""
     ACCOUNT ||--|{ BUDGET : ""
-
 ```
+
+---
 
 ## Excel Setup
 
@@ -206,6 +243,8 @@ The References worksheet contains the following 'helper' tables used in other pa
 
 - Used as a data validation pick list in the Bulk spreadsheet to simplify data entry.
 
+![Example References Worksheet in Excel](images/excel_references_example_01.png)
+
 ### Account
 
 The Account table must be setup and populated before you can start populating the Budget and Actuals tables as they both link back to it on `Account ID`.
@@ -214,7 +253,6 @@ You should take time to consider populating this table carefully as it will dete
 
 - a single account for groceries rather than breaking this down further (e.g. into fruit and vegetables, dry goods etc)
 - separate accounts for each streaming service we subscribed to rather than a single account for all streaming services
-
 
 The Account table contains the following fields used to describe and group accounts:
 
@@ -325,21 +363,80 @@ Check the page itself for instructions on how to use it.
 
 ![Example Bulk Worksheet in Excel](images/excel_bulk_example_01.png)
 
+---
+
 ## Power BI
 
 I've used Power BI because I am familiar with it via work and wanted an opportunity to a do a little more with it. Also Power BI is easily accessible for most folks and has been used at all of my recent organisations. I should probably have a go at rebuilding it in Tableau and Looker as well to get some experience with these tools.
 
 If you haven't used Power BI before Microsoft have some pretty decent guides available to get you started https://powerbi.microsoft.com/en-us/getting-started-with-power-bi/
 
-I have used the xyz theme created by blah with some minor tweaks.
-
-If you want to give the report I quick face lift check out other themes shared via the Power BI Themes Gallery https://community.powerbi.com/t5/Themes-Gallery/bd-p/ThemesGallery
+If you want to give the report I quick face lift check out the themes shared via the Power BI Themes Gallery https://community.powerbi.com/t5/Themes-Gallery/bd-p/ThemesGallery
 
 ### Load Data
 
 First step in creating any report is to lay your hands on some data, hopefully we have done an okay job on the Excel side of things.
 
+:memo: **Note** all of the instructions below take place in the Transform Data window.
 
+#### Parameters
+
+As we are going to be loading multiple tables from the one data source it makes sense to use Parameters to avoid having to re-enter the same information multiple times. This data source is an Excel Online file hosted on OneDrive, to load it in to Power BI we can use the embed URL which has the following components:
+
+- base url
+- resid
+- cid
+- authkey
+
+Because we might want to swap the report between different spreadsheets we are going to create one parameter for each component to make this a little simpler.
+
+Select *Manage Parameters* and create parameters as listed below, set the type for all to be *Text* and leave *Suggested Values* as *Any values*:
+
+- excel_url_base
+    - *excel_url_base* should have a value of `https://onedrive.live.com/download?App=Excel&em=2`
+- excel_url_resid
+- excel_url_cid
+- excel_url_authkey
+
+![Power BI Parameter Setup](images/powerbi_parameter_setup.png)
+
+:memo: **Note** see [Initial Setup](#initial-setup) for instructions on how to find the values for the other parameters.
+
+Once we have the parameters configured we can create a query to combine them into a complete URL that can be referred to in other queries.
+
+1. select *New Source > Blank Query*
+2. open the *Advanced Editor*
+3. enter the following
+    ```vbscript
+    let
+        excel_url = excel_url_base & "&resid=" & excel_url_resid & "&cid=" & excel_url_cid & "&authkey=" & excel_url_authkey
+    in
+        excel_url
+    ```
+4.  click *done* and then give the query a meaningful name e.g. excel_url
+    ![Power BI excel_url Setup](images/powerbi_excel_url_setup.png)
+
+#### Data Tables
+
+We now need to load in the following tables from the Excel spreadsheet:
+
+- Actuals
+- Budget
+- Account
+- DateRange
+
+The following instructions can be followed to load each table in with specific instructions per table noted below:
+
+1. select *New Source > Blank Query*
+2. open the *Advanced Editor*
+3. enter the following replacing **EXCEL_TABLE_NAME** with each desired table name
+    ```vbscript
+    let
+        Source = Excel.Workbook(Web.Contents(excel_url), null, true),
+        excel_table = Source{[Item="EXCEL_TABLE_NAME",Kind="Table"]}[Data]
+    in
+        excel_table
+    ```
 
 #### Date Table
 
