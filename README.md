@@ -773,6 +773,6 @@ Well one last thing to think about is creating a mobile view for each report pag
 I'm no UX expert but below are screenshots from my mobile phone of the mobile app views that I have created, noticeably missing our photos of impressed friends and/or enemies.
 
 ![Power BI App Summary](images/powerbi_app_summary_small.png)
-![Power BI App Highlights](images/powerbi_app_Highlights_small.png)
+![Power BI App Highlights](images/powerbi_app_highlights_small.png)
 ![Power BI App Account Details](images/powerbi_app_account_details_small.png)
 ![Power BI App Trends](images/powerbi_app_trends_small.png)
