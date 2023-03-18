@@ -8,7 +8,9 @@ This project uses Power BI and Excel Online to create a tracker for household ex
 
 The Power BI screenshots in this guide are from an example copy of the report which is using the *More Dark Mode* theme from *Numerro* with some minor tweaks https://community.powerbi.com/t5/Themes-Gallery/Showcasing-Themes-More-Dark-Mode/td-p/1987778
 
-Check out the [Excel](#excel) and [Power BI](#power-bi) sections to see how it all came together or dive straight into [Getting Started](#getting-started) to have a go at setting up something for yourself.
+- take a gander at an <a href="https://app.powerbi.com/view?r=eyJrIjoiZDIzMTg0MjAtOGQwOS00N2U5LWJmNmItYjVhNjgwYzM1YzU5IiwidCI6IjY1NDI1YWQ4LTFjY2UtNDgwMC1iNjZjLWYyZTQzNWI3NjEyZiJ9&pageName=ReportSection" target="_blank">example report</a> (filter pane is unavailable in this view)
+- check out [Getting Started](#getting-started) to have a go at setting up something similar for yourself
+- dive into the [Excel](#excel) and [Power BI](#power-bi) sections to see how it all came together
 
 At this stage all data entry is manual though if your bank supports it you could certainly look at automating data extraction for transactions.
 
