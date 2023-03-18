@@ -33,9 +33,17 @@ I used the Microsoft stack for this project as that aligns with my recent work e
 - [Power BI](#power-bI)
     - [Load Data](#load-data)
         - [Parameters](#parameters)
+        - [Data Tables](#data-tables)
         - [Date Table](#date-table)
-    - [Relationships](#relationships)
+        - [Tidy Up](#tidy-up)
+    - [Data Modelling](#data-modelling)
+        - [Relationships](#relationships)
+        - [Key Columns](#key-columns)
+        - [Display Folders](#display-folders)
+        - [Default Aggregations](#default-aggregations)
+        - [Formats and Sorts](#formats-and-sorts)
     - [Measures](#measures)
+    - [Report Filters](#report-filters)
     - [Visuals](#visuals)
     - [Mobile App](#mobile-app)
     - [Publishing](#publishing)
@@ -77,17 +85,13 @@ The first thing that we are going to do is configure copies of the Excel and Pow
         - cid = 4F9CE0027445F3F9
         - resid = 4F9CE0027445F3F9%21704043
         - authkey = ALtMpI-9vXWqOxc
-
-```html
-<iframe src="https://onedrive.live.com/embed?cid=4F9CE0027445F3F9&resid=4F9CE0027445F3F9%21704043&authkey=ALtMpI-9vXWqOxc&em=2" width="402" height="346" frameborder="0" scrolling="no"></iframe>
-```
-
+    ```html
+    <iframe src="https://onedrive.live.com/embed?cid=4F9CE0027445F3F9&resid=4F9CE0027445F3F9%21704043&authkey=ALtMpI-9vXWqOxc&em=2" width="402" height="346" frameborder="0" scrolling="no"></iframe>
+    ```
 5. Open the Power BI file and select *Transform Data > Edit Parameters*.
 6. Enter the values that you recorded in step 4 into their corresponding parameters.
     - leave excel_url_base as it is
-    
-    ![Power BI Parameters](images/powerbi_parameters.png)
-
+    - ![Power BI Parameters](images/powerbi_parameters.png)
 7. Try the *Refresh* button to check the connection to the Excel workbook, if prompted to login select **Anonymous**.
     - if things haven't worked out go back to step 4 and double check you have the correct values for the: resid; cid and; authkey
 8. Press *Close & Apply* to apply the changes that you have made.
@@ -373,6 +377,17 @@ If you haven't used Power BI before Microsoft have some pretty decent guides ava
 
 If you want to give the report I quick face lift check out the themes shared via the Power BI Themes Gallery https://community.powerbi.com/t5/Themes-Gallery/bd-p/ThemesGallery
 
+Before we get started there are a couple of report settings we'll need to configure:
+
+1. select *File > Options and Settings > Options*
+2. select *Current File > Data Load*
+3. untick the following options:
+    - Import relationships from data sources on first load
+    - Autodetect new relationships after data is loaded
+    - Auto date/time
+
+![Power BI Report Options](images/powerbi_report_options.png)
+
 ### Load Data
 
 First step in creating any report is to lay your hands on some data, hopefully we have done an okay job on the Excel side of things.
@@ -420,12 +435,12 @@ Once we have the parameters configured we can create a query to combine them int
 
 We now need to load in the following tables from the Excel spreadsheet:
 
+- Account
 - Actuals
 - Budget
-- Account
 - DateRange
 
-The following instructions can be followed to load each table in with specific instructions per table noted below:
+The following instructions can be followed to load the Account table, they are also the initial steps for the Actuals and Budget tables (specific instructions for Actuals and Budget further below):
 
 1. select *New Source > Blank Query*
 2. open the *Advanced Editor*
@@ -437,25 +452,327 @@ The following instructions can be followed to load each table in with specific i
     in
         excel_table
     ```
+4. select the drop down icon next to the Account ID column and select *Remove Empty*
+    - this will filter out any instances values have been deleted from rows in the Excel table but the empty rows are still there
+    - ![Power BI Data Tables Remove Empty](images/powerbi_data_tables_remove_empty.png)
+
+For the Actuals table:
+
+5. remove all columns except: Account ID; Amount; Date; Notes and; Tax Deductable
+6. select *Add Column > Index Column > From 0*, name it Actuals Key
+7. set Notes to lower case
+8. trim Notes
+9. split Notes on ' - ' and name the newly created column Details
+
+For the Budget table:
+
+We will need to create one record per budget item per week that it is effective. To do this we'll first create one record per day that it is effective and then filter down to just Sundays.
+
+5. select *Add Column > Custom Column* and enter formula `{ Number.From([Effective From])..Number.From([Effective To]) }`, name it Date
+6. select the icon to the right of Effective Date and select *Expand to New Rows*
+    - ![Power BI Budget Expand Effective Date](images/powerbi_budget_expand_effective_date.png)
+7. select the ABC123 icon to the left of Date and change the data type to Date
+8. select *Add Column > Custom Column* and enter formula `Date.DayOfWeekName([Date])`, name it Day of Week
+9. select the drop down icon to the right of Day of Week and filter to Sunday
+10. remove all columns except: Account ID; Budgeted Weekly Amount and; Date
+11. select *Add Column > Index Column > From 0*, name it Budget Key
 
 #### Date Table
 
-### Relationships
+We'll start with the DateRange table from Excel to generate our Power BI date table. This table starts off as a single row with a start and end date (based on the earliest and latest budget dates) and will become one row per date with categorical information for each date.
+
+I've started with the Power Query date table script from RADACAD and made some minor tweaks to suit it to my purpose: https://radacad.com/all-in-one-script-to-create-date-dimension-in-power-bi-using-power-query
+
+The Power Query script I ended up with is below, probably easiest to paste it over the top of the DateRange query via Advanced Editor and then look through the steps via the GUI if you are interested in the changes I made to the script referenced above.
+
+```vbscript
+let
+    // config start
+    Today=Date.From(DateTime.LocalNow()), // today's date
+    current_week_end=Date.EndOfWeek(DateTime.LocalNow(), Day.Monday),
+    StartofFiscalYear=7, // set the month number that is start of the financial year. example; if fiscal year start is July, value is 7
+    firstDayofWeek=Day.Monday, // set the week's start day, values: Day.Monday, Day.Sunday....
+    //config end
+    Source = Excel.Workbook(Web.Contents(excel_url), null, true),
+    DateRange_Table = Source{[Item="DateRange",Kind="Table"]}[Data],
+    #"Changed Type" = Table.TransformColumnTypes(DateRange_Table,{{"Start Date", type date}, {"End Date", type date}}),
+    #"Added Date Range" = Table.AddColumn(#"Changed Type", "Date", each { Number.From([Start Date])..Number.From([End Date]) }),
+    #"Expanded Date" = Table.ExpandListColumn(#"Added Date Range", "Date"),
+    #"Set Date Format" = Table.TransformColumnTypes(#"Expanded Date",{{"Date", type date}}),
+    #"Inserted Year" = Table.AddColumn(#"Set Date Format", "Year", each Date.Year([Date]), Int64.Type),
+    #"Inserted Start of Year" = Table.AddColumn(#"Inserted Year", "Start of Year", each Date.StartOfYear([Date]), type date),
+    #"Inserted End of Year" = Table.AddColumn(#"Inserted Start of Year", "End of Year", each Date.EndOfYear([Date]), type date),
+    #"Inserted Month" = Table.AddColumn(#"Inserted End of Year", "Month", each Date.Month([Date]), Int64.Type),
+    #"Inserted Start of Month" = Table.AddColumn(#"Inserted Month", "Start of Month", each Date.StartOfMonth([Date]), type date),
+    #"Inserted End of Month" = Table.AddColumn(#"Inserted Start of Month", "End of Month", each Date.EndOfMonth([Date]), type date),
+    #"Inserted Days in Month" = Table.AddColumn(#"Inserted End of Month", "Days in Month", each Date.DaysInMonth([Date]), Int64.Type),
+    #"Inserted Day" = Table.AddColumn(#"Inserted Days in Month", "Day", each Date.Day([Date]), Int64.Type),
+    #"Inserted Day Name" = Table.AddColumn(#"Inserted Day", "Day Name", each Date.DayOfWeekName([Date]), type text),
+    #"Inserted Day of Week" = Table.AddColumn(#"Inserted Day Name", "Day of Week", each Date.DayOfWeek([Date],firstDayofWeek), Int64.Type),
+    #"Inserted Day of Year" = Table.AddColumn(#"Inserted Day of Week", "Day of Year", each Date.DayOfYear([Date]), Int64.Type),
+    #"Inserted Month Name" = Table.AddColumn(#"Inserted Day of Year", "Month Name", each Date.MonthName([Date]), type text),
+    #"Inserted Quarter" = Table.AddColumn(#"Inserted Month Name", "Quarter", each Date.QuarterOfYear([Date]), Int64.Type),
+    #"Inserted Start of Quarter" = Table.AddColumn(#"Inserted Quarter", "Start of Quarter", each Date.StartOfQuarter([Date]), type date),
+    #"Inserted End of Quarter" = Table.AddColumn(#"Inserted Start of Quarter", "End of Quarter", each Date.EndOfQuarter([Date]), type date),
+    #"Inserted Week of Year" = Table.AddColumn(#"Inserted End of Quarter", "Week of Year", each Date.WeekOfYear([Date],firstDayofWeek), Int64.Type),
+    #"Inserted Week of Month" = Table.AddColumn(#"Inserted Week of Year", "Week of Month", each Date.WeekOfMonth([Date],firstDayofWeek), Int64.Type),
+    #"Inserted Start of Week" = Table.AddColumn(#"Inserted Week of Month", "Start of Week", each Date.StartOfWeek([Date],firstDayofWeek), type date),
+    #"Inserted End of Week" = Table.AddColumn(#"Inserted Start of Week", "End of Week", each Date.EndOfWeek([Date],firstDayofWeek), type date),
+    #"Inserted Is Current Week or Earlier" = Table.AddColumn(#"Inserted End of Week", "Is Current Week or Earlier", each DateTime.Date([End of Week]) <= DateTime.Date(Date.EndOfWeek(DateTime.LocalNow(), Day.Monday)), type logical),
+    #"Inserted Is Current Week" = Table.AddColumn(#"Inserted Is Current Week or Earlier", "Is Current Week", each DateTime.Date([End of Week]) = DateTime.Date(Date.EndOfWeek(DateTime.LocalNow(), Day.Monday)), type logical),
+    FiscalMonthBaseIndex=13-StartofFiscalYear,
+    adjustedFiscalMonthBaseIndex=if(FiscalMonthBaseIndex>=12 or FiscalMonthBaseIndex<0) then 0 else FiscalMonthBaseIndex,
+    #"Add Helper FiscalBaseDate" = Table.AddColumn(#"Inserted Is Current Week", "FiscalBaseDate", each Date.AddMonths([Date],adjustedFiscalMonthBaseIndex), type date),
+    #"Inserted Fiscal Year" = Table.AddColumn(#"Add Helper FiscalBaseDate", "Fiscal Year", each Date.Year([FiscalBaseDate]), Int64.Type),
+    #"Inserted Fiscal Quarter" = Table.AddColumn(#"Inserted Fiscal Year", "Fiscal Quarter", each Date.QuarterOfYear([FiscalBaseDate]), Int64.Type),
+    #"Inserted Fiscal Month" = Table.AddColumn(#"Inserted Fiscal Quarter", "Fiscal Month", each Date.Month([FiscalBaseDate]), Int64.Type),
+    #"Removed Helper FiscalBaseDate" = Table.RemoveColumns(#"Inserted Fiscal Month",{"FiscalBaseDate"}),
+    #"Inserted Age" = Table.AddColumn(#"Removed Helper FiscalBaseDate", "Age", each [Date]-Today, type duration),
+    #"Extracted Days from Age" = Table.TransformColumns(#"Inserted Age",{{"Age", Duration.Days, Int64.Type}}),
+    #"Rename Age to Day Offset" = Table.RenameColumns(#"Extracted Days from Age",{{"Age", "Day Offset"}}),
+    #"Inserted Month Offset" = Table.AddColumn(#"Rename Age to Day Offset", "Month Offset", each (([Year]-Date.Year(Today))*12)
++([Month]-Date.Month(Today)), Int64.Type),
+    #"Inserted Year Offset" = Table.AddColumn(#"Inserted Month Offset", "Year Offset", each [Year]-Date.Year(Today), Int64.Type),
+    #"Inserted Quarter Offset" = Table.AddColumn(#"Inserted Year Offset", "Quarter Offset", each (([Year]-Date.Year(Today))*4)
++([Quarter]-Date.QuarterOfYear(Today)), Int64.Type),
+    #"Inserted Year-Month" = Table.AddColumn(#"Inserted Quarter Offset", "Year-Month", each Date.ToText([Date],"MMM yyyy")),
+    #"Inserted Year-Month Code" = Table.AddColumn(#"Inserted Year-Month", "Year-Month Code", each Date.ToText([Date],"yyyyMM")),
+    #"Inserted Quarter-Year" = Table.AddColumn(#"Inserted Year-Month Code", "Quarter-Year", each "Q" & Number.ToText([Quarter]) & "-" & Number.ToText([Year]), type text)
+in
+    #"Inserted Quarter-Year"
+```
+
+#### Tidy Up
+
+Now that we have our tables ready to load into the report we should do a quick tidy up to make sure that when we have to look at this again in 6 months to add something new in it all makes sense.
+
+- create a table to hold DAX measures
+- create folders to organise your queries
+    - ![Power BI Query Tidy Up](images/powerbi_query_tidyup.png)
+- right click on excel_url and untick *Include in report refresh* to hide it from the report view
+- if you weren't doing it as you went go back through the applied steps for each table and make sure they have meaningful names
+    - if you think it would be handy you can also right click on the step and select *Properties* this allows you to enter more details about what you are trying to achieve
+    - ![Power BI Applied Step Properties](images/powerbi_applied_step_properties.png)
+
+### Data Modelling
+
+All of the steps in this section take place in the model view.
+
+#### Relationships
+
+To get the most of our star schema data model we'll need to create the following relationships between the fact and dimension tables:
+
+- Actuals and Account via Account ID
+- Actuals and Date via Date
+- Budget and Account via Account ID
+- Budget and Date via Date
+
+For a data model this simple the easiest way to create the relationships is to click and drag between the columns you want to create the relationships for. Power BI should automatically setup the relationship with the required properties but jsut in case it should look like the example below:
+
+![Power BI Relationship Example](images/powerbi_relationship_example.png)
+
+Once done you should end up with a model view that looks something like this:
+
+![Power BI Model View](images/powerbi_model_view.png)
+
+#### Key Columns
+
+I should add some words as to why key columns are significant but for this project they probably aren't and I'm not familiar enough with how they should be used to add much of anything here.
+
+Click through each table in turn and set the key column as below:
+
+- Actuals: Actuals Key
+- Budget: Budget Key
+- Account: Account ID
+- Date: Date
+
+#### Display Folders
+
+For tables with large numbers of columns it can make life easier to group them using display folders e.g. for the date table I'll group columns by granularity.
+
+- ctrl-click to select multiple columns
+- enter the folder name under the *Display folder* heading
+- press enter
+- ![Power BI Display Folder](images/powerbi_display_folder.png)
+
+#### Default Aggregations
+
+By default Power BI will try to summarise numeric columns (generally by summing them) however this doesn't always make sense e.g. for columns that control sorting of labels. To keep things neat we will set the *Summarize by* value for columns like this to *None*.
+
+In this report the only columns that meet this criteria are the numeric columns in the Date table.
+
+- ctrl-click to select all columns in the date table
+- expand the *Advanced* properties
+- set *Summarize by* to *None*
+- ![Power BI Default Aggregation](images/powerbi_default_aggregation.png)
+
+#### Formats and Sorts
+
+Click through and apply formats and sort bys to all required columns. In this project this will typically be columns in the date table e.g.:
+
+- set the format of the End of Week column to something shorter than the default
+- set the Day Name column to sort by Day
+- ![Power BI Sort By](images/powerbi_sort_by.png)
 
 ### Measures
 
+In Power BI you can create visualisations using either explicit or implicit measures, more details are available online e.g. https://radacad.com/explicit-vs-implicit-dax-measures-in-power-bi
+
+For this project I'm going to be creating explicit measures for use in visuals. To help keep our report organised we have already created a measures table in Power Query, this is where we'll add all of our measures (and once we get enough created organise them with Display Folders).
+
+:memo: **Note** once you have created at least one measure you can right click on the normal column in the measures table and select *Hide* to change the icon for the measures table to that of a calculation group.
+
+I've started with the following simple measures but there is plenty of scope to expand these for more involved analysis. To create these measures click into the measures table and then select *Table tools > New measure*.
+
+- `$ Actuals = SUM(Actuals[Amount]) + 0`
+- `$ Budget = SUM(Budget[Budgeted Weekly Amount])`
+- `$ Variance = [$ Actuals] - [$ Budget]`
+- `% Variance = DIVIDE([$ Variance], [$ Budget], 0)`
+- `Avg Weekly Actuals = DIVIDE([$ Actuals], DISTINCTCOUNT('Date'[End of Week]), 0)`
+- `Avg Weekly Budget = DIVIDE([$ Budget], DISTINCTCOUNT('Date'[End of Week]), 0)`
+- `Avg Weekly Variance = [Avg Weekly Actuals] - [Avg Weekly Budget]`
+
+We then have some measures to reflect values based on a selected week e.g. from cross filtering other report objects:
+
+- `$ Actuals (Selected Week) = CALCULATE([$ Actuals], 'Date'[End of Week] = SELECTEDVALUE('Date'[End of Week], MAX('Date'[End of Week])))`
+- `$ Budget - Other (Selected Week) = CALCULATE([$ Budget (Selected Week)], NOT(Account[Is Food Related]), NOT(Account[Is Day to Day Living]))`
+- `$ Budget (Selected Week) = CALCULATE([$ Budget], 'Date'[End of Week] = SELECTEDVALUE('Date'[End of Week], MAX('Date'[End of Week])))`
+
+Some measures for YTD values (calendar year because I am not an accountant (also I started data collection at the start of calendar year 2023)):
+
+- `$ Actuals - YTD = TOTALYTD([$ Actuals], 'Date'[Date])`
+- `$ Budget - YTD = TOTALYTD([$ Budget], 'Date'[Date])`
+- `$ Variance - YTD = [$ Budget - YTD] - [$ Actuals - YTD]`
+
+And finally some measures to control different display elements in the report:
+
+- `Colour - Variance = IF([$ Variance] <= 0, "#517A51", "#C14242")`
+- `Selected Week = SELECTEDVALUE('Date'[End of Week], MAX('Date'[End of Week]))`
+- `Selected Week as Text = FORMAT([Selected Week], "Ddd, dd Mmm")`
+- `Title - Selected Week Actuals and Budget by Account Type = "Week Ended " & [Selected Week as Text] & " Actuals and Budget by Account Type"`
+- `Title - Selected Week Actuals by Account = "Week Ended " & [Selected Week as Text] & " Actuals by Account"`
+- `Tooltip Title - by Account = `
+    ```vbscript
+    VAR vAccountType = SELECTEDVALUE(Account[Account Type])
+    VAR vAccount = SELECTEDVALUE(Account[Account])
+    RETURN IF(ISBLANK(vAccount), vAccountType, vAccountType & " - " & vAccount)
+    ```
+
+:memo: **Note** consider using a tool like Tabular Editor to speed up measure creation: https://github.com/TabularEditor/TabularEditor/releases/tag/2.17.3
+
+### Report Filters
+
+Report filters are a handy way to provide a seamless transition between report pages while performing some sort of drill down analysis. I tend to think the more the merrier when it comes to report filters, if a particular filter doesn't make sense on a given page it should be fairly evident and the user can simply remove the filter.
+
+For this project I've added the following report filters:
+
+- Account Owner
+- Account Type
+- Account
+- Account ID
+- Breakdown
+- Is Day to Day Living
+- Is Food Related
+- Quarter-Year
+- Start of Month
+- Start of Week
+
+:memo: **Note** for a project like this consider using a report level date filter to filter out date ranges without meaningful data entry, in the example Power BI file I have filtered out Sunday January 1 2023 as there is no data entry for the 6 days in this week (ending on Sunday) that fall in 2022.
+
 ### Visuals
+
+It has been a long journey (at least documentation wise) but we are there, we can start creating pretty pictures on a screen so that we can draw meaningful insights from them!
+
+Each of the following sections represents a report page that I have created as some initial inspiration but I would strongly encourage you to have a go at creating visuals that mean something to you.
+
+I've provided a summary of what I've created and every now and then why, rather than transcribe the nitty gritty refer to [Example Household Expenses.pbix](Example%20Household%20Expenses.pbix) to see exactly how things have come together.
 
 #### Summary
 
+Provides a quick overview of how the more variable expenses are tracking in recent weeks.
+
+Default Page Filter(s):
+
+- Is Current Week or Earlier is True (locked)
+- Is Day to Day Living is True
+
+This page has 3 main sections:
+
+- full length row along the top with a line chart tracking variances by end of week and summary cards to give overall values
+- bottom left corner with a bar chart comparing *Actuals* vs *Budget* by *Account Type*
+    - this bar chart is faceted (or small multiples in Microsoft speak) by end of week
+    - as you click through the bars in the *Variance by Week* chart above it you will filter to the selected week
+    - I ended up using small multiples as that was the only way I could finder to set the appropriate context filter to *TT - by Account*
+- bottom right corner with a tree map breaking down *Actuals* by *Account* and *Account Owner*
+
+![Power BI Report Page Summary](images/powerbi_report_page_summary.png)
+
 ##### TT - by Account
+
+This page is setup as a tooltip page and is used by the bottom two visuals of the Summary page.
+
+It consists of a single table of actuals line items where the title has been set to measure *Tooltip Title - by Account* so that it will appropriately reflect the filter context of the calling visual.
+
+![Power BI Report Page Summary](images/powerbi_report_page_tt_by_account.png)
 
 #### Highlights
 
+Used to identify any accounts that are trending significantly above what I expected/had vague plans for.
+
+Default Page Filter(s):
+
+- Is Current Week or Earlier is True (locked)
+
+This page has 3 main sections:
+
+- two column charts on the left, both are the top 5 accounts by *Variance* with one using the YTD measures and the other filtered to the last 4 weeks
+- supporting these charts are line item tables for *Budget* and *Actuals* so that you can quickly drill into why a particular account may be over budget
+- finally we have the variance by every account so you can get some visibility over accounts that are under budget as well
+
+![Power BI Report Page Higlights](images/powerbi_report_page_highlights.png)
+
 #### Account Details
+
+This page enables you to drill into the performance of a specific account or group of accounts.
+
+It has 3 main sections supported by slicers on the left to let you quicly drill down to a particular account:
+
+- line chart along the top to show the overall value of the selected account(s) vs budget
+- column chart showing overall variance by quarter supported by cards that also note the weekly average values
+- word cloud made up of the notes attached to actuals
+    - many accounts don't tend to get notes as all the detail is in the account name, for these accounts the word cloud will be blank
+
+![Power BI Report Page Account Details](images/powerbi_report_page_account_details.png)
 
 #### Trends
 
+Provides a general high level overview of how actuals are tracking, both week on week and overall for YTD.
+
+Default Page Filter(s):
+
+- Is Current Week or Earlier is True (locked)
+
+This page is split into even quandrants:
+
+- on the left we have actuals by high level breakdown, for me that means:
+    - Day to Day
+    - Food
+    - Other
+- on the right we have just actuals where the high level breakdown = other and then broken down by Account Type
+- on the top we have charts showing the trend of the weekly values with the current weekly budget provided as a benchmark
+- on the bottom we have cumulative YTD values
+
+![Power BI Report Page Trends](images/powerbi_report_page_trends.png)
+
 ### Mobile App
 
-### Publishing
+Not satisified, you want more? But it turns out documentation can be tedious and I'm not sure how useful it is anymore.
+
+Well one last thing to think about is creating a mobile view for each report page so that you can impress friends and enemies alike while out and about.
+
+I'm no UX expert but below are screenshots from my mobile phone of the mobile app views that I have created, noticeably missing our photos of impressed friends and/or enemies.
+
+![Power BI App Summary](images/powerbi_app_summary_small.png)
+![Power BI App Highlights](images/powerbi_app_Highlights_small.png)
+![Power BI App Account Details](images/powerbi_app_account_details_small.png)
+![Power BI App Trends](images/powerbi_app_trends_small.png)
