@@ -459,7 +459,7 @@ The following instructions can be followed to load the Account table, they are a
     - this will filter out any instances values have been deleted from rows in the Excel table but the empty rows are still there
     - ![Power BI Data Tables Remove Empty](images/powerbi_data_tables_remove_empty.png)
 
-For the Actuals table:
+**For the Actuals table:**
 
 5. remove all columns except: Account ID; Amount; Date; Notes and; Tax Deductable
 6. select *Add Column > Index Column > From 0*, name it Actuals Key
@@ -467,9 +467,7 @@ For the Actuals table:
 8. trim Notes
 9. split Notes on ' - ' and name the newly created column Details
 
-For the Budget table:
-
-We will need to create one record per budget item per week that it is effective. To do this we'll first create one record per day that it is effective and then filter down to just Sundays.
+**For the Budget table** we will need to create one record per budget item per week that it is effective. To do this we'll first create one record per day that it is effective and then filter down to just Sundays.
 
 5. select *Add Column > Custom Column* and enter formula `{ Number.From([Effective From])..Number.From([Effective To]) }`, name it Date
 6. select the icon to the right of Effective Date and select *Expand to New Rows*
@@ -570,7 +568,7 @@ To get the most of our star schema data model we'll need to create the following
 - Budget and Account via Account ID
 - Budget and Date via Date
 
-For a data model this simple the easiest way to create the relationships is to click and drag between the columns you want to create the relationships for. Power BI should automatically setup the relationship with the required properties but jsut in case it should look like the example below:
+For a data model this simple the easiest way to create the relationships is to click and drag between the columns you want to create the relationships for. Power BI should automatically setup the relationship with the required properties but just in case it should look like the example below:
 
 ![Power BI Relationship Example](images/powerbi_relationship_example.png)
 
