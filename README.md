@@ -50,7 +50,6 @@ I used the Microsoft stack for this project as that aligns with my recent work e
     - [Report Filters](#report-filters)
     - [Visuals](#visuals)
     - [Mobile App](#mobile-app)
-    - [Publishing](#publishing)
 
 ## Getting Started
 
