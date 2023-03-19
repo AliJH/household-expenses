@@ -125,7 +125,7 @@ You can use the *Refresh* button in Power BI desktop to manually refresh your re
 
 ### Analysis
 
-While the visualisations I have created so far are hopefully a good start they have been tailored to where I want to take my personal analysis.
+While the visualisations I have created so far are hopefully a good start they have been tailored to where I want to take my personal analysis at time of writing, delete anything that doesn't make sense and create what works for you.
 
 Each page that I have created is geared towards a specific purpose:
 
